@@ -1,0 +1,193 @@
+// FIND.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+                                             
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <iostream>
+#include <Windows.h>
+#include "Header.h"
+#include <ShlObj_core.h>
+#include <shellapi.h>
+#pragma "Debug"
+#pragma comment(lib, "advapi32.lib")  // For Windows services
+#pragma comment(lib, "urlmon.lib")    // For URLDownloadToFileW
+using namespace std;
+
+struct countryData{ //Each red rectangle is 11x11 pixels
+	string name;
+	int x;
+	int y;
+
+
+};
+
+int main()
+{
+	HWND consoleWindow = GetConsoleWindow();
+	if (!IsUserAnAdmin())
+	{
+		if (!RelaunchAsAdmin())TerminalError("RelaunchAsAdmin Error Exiting.....\n", GetConsoleWindow());
+		cout << "This Program requires Admin Permissions, relaunching.....\n";
+		return 0;
+	}
+
+
+
+	
+	string placeholderString;
+	int placeholderInt;
+	cout << "Welcome!\n";
+	if (!CheckYggdrasilInstallStatus()) {
+		cout << "FIND needs Yggdrasil to run (handles Multiplayer), do you want to install (program will close without installing Yggdrasil)? (y/n)" << endl;
+		cin >> placeholderString;
+		if (placeholderString == "y" || placeholderString == "Y") {
+			system("sc start msiserver");
+			if (!DownloadYggdrasil(getExecutableDir()))TerminalError("DownloadYggdrasil Error, exiting...\n",consoleWindow);
+			placeholderString =  "\""+Wstring2String(getExecutableDir()) + "\\yggdrasil-0.5.12-x64.msi\"";
+			system(placeholderString.c_str());
+			addToUserPath(getExecutableDir()); //Add Yggdrasil to the user PATH so it can be used in the future
+		}
+		else return 0;
+	}
+	else cout << "Yggdrasil is already installed! Skipping installation...\n";
+	StartYggdrasil();
+	cout << "If its says \"An instance of the service is already running.\" its working!";
+	countryData countries[37] = { //These Coordinates are within the Picture, keep in mind to change them accoring to where the picture is renderd
+		{"Ireland",122,388},
+		{"United Kingdom",242,409},
+		{"Portugal",88,695},
+		{"Spain",183,679},
+		{"France",294,512},
+		{"Belgium",340,442},
+		{"Netherlands",349,411},
+		{"Germany",421,410},
+		{"Switzerland",398,521},
+		{"Italy",454,553},
+		{"Norway",443,235},
+		{"Sweden",501,297},
+		{"Finland",689,220},
+		{"Czechia",501,458},
+		{"Austria",532,503},
+		{"Slovenia",521,540},
+		{"Croatia",528,573},
+		{"Bosnia and Herzigovina",581,591},
+		{"Serbia",632,590},
+		{"Montenegro",602,618},
+		{"Kosovo",634,622},
+		{"North Macedonia",634,622},
+		{"Albania",624,666},
+		{"Greece",652,686},
+		{"Bulgaria",713,624},
+		{"Romania",725,555},
+		{"Hungary",601,520},
+		{"Slovakia",588,484},
+		{"Poland",565,396},
+		{"Lithuania",673,347},
+		{"Latvia",680,301},
+		{"Estonia",696,265},
+		{"Ukraine",794,463},
+		{"Belarus",726,381},
+		{"Russia",873,387},
+		{"Turkey",801,698},
+		{"Moldova",769,521}
+	};
+
+	
+
+
+	
+	bool Mode; //0 for countrys 1 for cities
+	SDL_Color black = { 0, 0, 0, 0 };
+	SDL_Event event;
+	bool placeholderBool=false;
+	
+	
+	if (SDL_Init(SDL_INIT_VIDEO) != true) TerminalError("SDL_INIT Error.->" + string(SDL_GetError()),consoleWindow);
+	if (TTF_Init() != true) TerminalError("TTF_INIT Error.->" + string(SDL_GetError()), consoleWindow);
+
+	SDL_Window* window = SDL_CreateWindow("SDL3 Window", 1000, 1000, NULL);
+	if (!window) TerminalError("SDL_CreateWindow Error.->" + string(SDL_GetError()), consoleWindow);
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
+	if (!renderer) TerminalError("SDL_CreateRenderer Error.->" + string(SDL_GetError()), consoleWindow);
+
+	SDL_Texture* chooseTexture = IMG_LoadTexture(renderer, "Choose_Mode.png"); 
+	if (!chooseTexture) TerminalError("IMG_LoadTexture Error. ->" + string(SDL_GetError()), consoleWindow);
+	SDL_RenderTexture(renderer, chooseTexture, 0, 0);
+	SDL_RenderPresent(renderer);
+
+	while (!placeholderBool) {
+		while (SDL_PollEvent(&event))
+		{
+			if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+			{
+				if (event.button.x > 91 && event.button.x < 419 && event.button.y>230 && event.button.y < 500)
+				{
+					Mode = 0;
+					placeholderBool = true;
+
+
+				}
+				
+
+			}
+
+
+		}
+	}
+	if (Mode == 0)//country mode
+	{
+		
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+		SDL_RenderClear(renderer);
+		SDL_Texture* europeMap = IMG_LoadTexture(renderer, "europe_map.png");
+		if(!europeMap)TerminalError("IMG_LoadTexture Error. ->" + string(SDL_GetError()), consoleWindow);
+		SDL_FRect Map_rect{ 100.0f,100.0f, 900.0f,900.0f };
+		while(true)
+		{ 
+			SDL_RenderClear(renderer);
+		SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
+		placeholderInt = random(0, 36);
+		TTF_Font* font = TTF_OpenFont("arial.ttf", 50); if (!font) {TerminalError("TTF_OpenFont Error.->" + string(SDL_GetError()), consoleWindow);}
+		SDL_Surface* countryTextSurface = TTF_RenderText_Solid(font, countries[placeholderInt].name.c_str(), countries[placeholderInt].name.length(), black); if (!countryTextSurface)TerminalError("TTF_RenderText_Solid Error.->" + string(SDL_GetError()), consoleWindow);
+		SDL_Texture* countryTextTexture = SDL_CreateTextureFromSurface(renderer, countryTextSurface); if (!countryTextTexture)TerminalError("SDL_CreateTextureFromSurface Error.->" + string(SDL_GetError()), consoleWindow);
+		SDL_FRect countryTextRect{ 5,5,countryTextSurface->w,countryTextSurface->h };
+		SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+		SDL_RenderPresent(renderer);
+		placeholderBool = false;
+		while (!placeholderBool)
+		{
+			while (SDL_PollEvent(&event))
+			{
+				if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+				{
+					if (event.button.x > countries[placeholderInt].x + 100 && event.button.x < countries[placeholderInt].x + 100 + 11 && event.button.y > countries[placeholderInt].y + 100 && event.button.y < countries[placeholderInt].y + 100 + 11)
+					{
+						cout << "Correct!\n";
+						placeholderBool = true;
+					}
+					else
+					{
+						cout << "WRONG! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+
+					}
+
+				}
+
+
+
+			}
+
+
+
+		}
+		}
+	}
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+	TTF_Quit();
+	return 0;
+
+}
+
+
