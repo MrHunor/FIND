@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <random>
@@ -6,12 +5,21 @@
 #include <sstream>
 #include <iomanip>
 #include <thread>
-#include <Windows.h>
 #include <locale>
 #include <codecvt>
+#define WIN32_LEAN_AND_MEAN // Prevent windows.h from including winsock.h
+#include <winsock2.h>       // Must come first
+#include <windows.h>        // After winsock2.h
+#include <ws2tcpip.h>       // For getaddrinfo and inet_ntop
+#include <iostream>
+#include <iphlpapi.h>       // For GetAdaptersAddresses
+#include <shellapi.h>
+#include <urlmon.h>
 #pragma comment(lib, "Shell32.lib")
 #pragma comment(lib, "Advapi32.lib")
 #pragma comment(lib, "User32.lib")
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
 bool RelaunchAsAdmin()
@@ -164,6 +172,141 @@ bool DownloadYggdrasil(const std::wstring& destinationDir) {
         return false;
     }
 }
+
+string GetYggdrasilIP() {
+    ULONG bufferSize = 15000;
+    IP_ADAPTER_ADDRESSES* addresses = (IP_ADAPTER_ADDRESSES*)malloc(bufferSize);
+
+    DWORD ret = GetAdaptersAddresses(AF_INET6, 0, NULL, addresses, &bufferSize);
+    if (ret != NO_ERROR) {
+        std::cerr << "GetAdaptersAddresses failed with error: " << ret << std::endl;
+        free(addresses);
+        return "";
+    }
+
+    for (IP_ADAPTER_ADDRESSES* adapter = addresses; adapter != NULL; adapter = adapter->Next) {
+        if (adapter->FriendlyName && wcsstr(adapter->FriendlyName, L"Yggdrasil")) {
+            for (IP_ADAPTER_UNICAST_ADDRESS* ua = adapter->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
+                if (ua->Address.lpSockaddr->sa_family == AF_INET6) {
+                    char ipStr[INET6_ADDRSTRLEN] = {};
+                    int result = getnameinfo(ua->Address.lpSockaddr, (int)ua->Address.iSockaddrLength,
+                        ipStr, sizeof(ipStr), nullptr, 0, NI_NUMERICHOST);
+                    if (result == 0) {
+                        free(addresses);
+                        return std::string(ipStr);
+                    }
+                }
+            }
+        }
+    }
+
+    free(addresses);
+    return "GetYggdrasilIP Error";
+}
+
+void SendMessageToPeer(const std::string& ipv6, unsigned short port, const std::string& message) {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    SOCKET sock = socket(AF_INET6, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET) {
+        std::cerr << "Socket creation failed\n";
+        return;
+    }
+
+    sockaddr_in6 addr = {};
+    addr.sin6_family = AF_INET6;
+    addr.sin6_port = htons(port);
+    inet_pton(AF_INET6, ipv6.c_str(), &addr.sin6_addr);
+
+    if (connect(sock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+        std::cerr << "Failed to connect to " << ipv6 << ":" << port << "\n";
+        closesocket(sock);
+        WSACleanup();
+        return;
+    }
+
+    send(sock, message.c_str(), message.length(), 0);
+    std::cout << "Message sent: " << message << "\n";
+
+    closesocket(sock);
+    WSACleanup();
+}
+void StartListening(unsigned short port) {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    SOCKET serverSocket = socket(AF_INET6, SOCK_STREAM, 0);
+    if (serverSocket == INVALID_SOCKET) {
+        std::cerr << "Invalid Socket. Exiting listener thread.\n";
+        return;
+    }
+
+    sockaddr_in6 serverAddr = {};
+    serverAddr.sin6_family = AF_INET6;
+    serverAddr.sin6_port = htons(port);
+    serverAddr.sin6_addr = in6addr_any;
+
+    if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        std::cerr << "Bind failed. Exiting listener thread.\n";
+        closesocket(serverSocket);
+        return;
+    }
+
+    listen(serverSocket, SOMAXCONN);
+    std::cout << "Listening for connections on port " << port << "...\n";
+
+    while (true) {
+        sockaddr_in6 clientAddr;
+        int clientAddrSize = sizeof(clientAddr);
+        SOCKET clientSocket = accept(serverSocket, (sockaddr*)&clientAddr, &clientAddrSize);
+        if (clientSocket == INVALID_SOCKET) continue;
+
+        char buffer[1024];
+        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+        if (bytesReceived > 0) {
+            buffer[bytesReceived] = '\0';
+            std::cout << "Received: " << buffer << std::endl;
+        }
+
+        closesocket(clientSocket);
+    }
+
+    closesocket(serverSocket);
+    WSACleanup();
+}
+bool isPortFree(int port) {
+#ifdef _WIN32
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+
+    int sock = socket(AF_INET6, SOCK_STREAM, 0);
+    if (sock < 0) {
+#ifdef _WIN32
+        WSACleanup();
+#endif
+        std::cerr << "Failed to create socket\n";
+        return false; // Can't check, assume not free
+    }
+   
+    sockaddr_in6 addr{};
+    addr.sin6_family = AF_INET6;
+    addr.sin6_addr = in6addr_any;  // Listen on all IPv6 addresses
+    addr.sin6_port = htons(port);
+
+    int result = bind(sock, (sockaddr*)&addr, sizeof(addr));
+#ifdef _WIN32
+    closesocket(sock);
+    WSACleanup();
+#else
+    close(sock);
+#endif
+
+    return (result == 0); // If bind succeeded, port is free
+}
+
+
 
 bool InstallYggdrasilMSI(const std::wstring& msiPath) {
     std::wstring command = L"msiexec.exe /i \"" + msiPath + L"\" /quiet /norestart";

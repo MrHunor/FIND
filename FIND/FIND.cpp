@@ -4,14 +4,31 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <iostream>
-#include <Windows.h>
 #include "Header.h"
 #include <ShlObj_core.h>
-#include <shellapi.h>
-#pragma "Debug"
-#pragma comment(lib, "advapi32.lib")  // For Windows services
 #pragma comment(lib, "urlmon.lib")    // For URLDownloadToFileW
+#include <vector>
+#include <string>
+#include <random>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <thread>
+#include <locale>
+#include <codecvt>
+#define WIN32_LEAN_AND_MEAN // Prevent windows.h from including winsock.h
+#include <winsock2.h>       // Must come first
+#include <windows.h>        // After winsock2.h
+#include <ws2tcpip.h>       // For getaddrinfo and inet_ntop
+#include <iostream>
+#include <iphlpapi.h>       // For GetAdaptersAddresses
+#include <shellapi.h>
+#include <urlmon.h>
+#pragma comment(lib, "Shell32.lib")
+#pragma comment(lib, "Advapi32.lib")
+#pragma comment(lib, "User32.lib")
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
 struct countryData{ //Each red rectangle is 11x11 pixels
@@ -24,7 +41,15 @@ struct countryData{ //Each red rectangle is 11x11 pixels
 
 int main()
 {
+	//XXXXXXXXXXXXXXXXXXXXXXXXXX works locally but not on the internet, likely firewall. install errorcatching for sending and reciving messages 
 	HWND consoleWindow = GetConsoleWindow();
+	string placeholderString;
+	int placeholderInt;
+	bool Mode; //0 for countrys 1 for cities
+	SDL_Color black = { 0, 0, 0, 0 };
+	SDL_Event event;
+	bool placeholderBool = false;
+	string peerIP;
 	if (!IsUserAnAdmin())
 	{
 		if (!RelaunchAsAdmin())TerminalError("RelaunchAsAdmin Error Exiting.....\n", GetConsoleWindow());
@@ -35,8 +60,7 @@ int main()
 
 
 	
-	string placeholderString;
-	int placeholderInt;
+	
 	cout << "Welcome!\n";
 	if (!CheckYggdrasilInstallStatus()) {
 		cout << "FIND needs Yggdrasil to run (handles Multiplayer), do you want to install (program will close without installing Yggdrasil)? (y/n)" << endl;
@@ -52,8 +76,25 @@ int main()
 	}
 	else cout << "Yggdrasil is already installed! Skipping installation...\n";
 	StartYggdrasil();
-	cout << "If its says \"An instance of the service is already running.\" its working!";
-	countryData countries[37] = { //These Coordinates are within the Picture, keep in mind to change them accoring to where the picture is renderd
+	cout << "If its says \"An instance of the service is already running.\" its working!\n";
+
+
+	//multiplayer setup
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+	std::string ip = GetYggdrasilIP();
+	std::cout << "Yggdrasil IP: " << ip << std::endl;
+	WSACleanup();
+	system("netsh advfirewall firewall add rule name=\"FIND_Game\" dir=in action=allow protocol=TCP localport=12345");//set firewall rule to allow traffic through port 12345
+	cout << "Please enter your Peers(Mutiplayers)IP:";
+	cin >> peerIP;
+	if (!isPortFree(12345))TerminalError("Port 12345(default port) is not free. Exiting....", consoleWindow);
+	thread listernerThread(StartListening, 12345); //Start the listener thread
+	listernerThread.detach(); //Detach the thread so it runs in the background
+
+
+	countryData countries[38] = { //These Coordinates are within the Picture, keep in mind to change them accoring to where the picture is renderd
 		{"Ireland",122,388},
 		{"United Kingdom",242,409},
 		{"Portugal",88,695},
@@ -89,6 +130,7 @@ int main()
 		{"Ukraine",794,463},
 		{"Belarus",726,381},
 		{"Russia",873,387},
+		{"Russia",794,463},
 		{"Turkey",801,698},
 		{"Moldova",769,521}
 	};
@@ -97,10 +139,7 @@ int main()
 
 
 	
-	bool Mode; //0 for countrys 1 for cities
-	SDL_Color black = { 0, 0, 0, 0 };
-	SDL_Event event;
-	bool placeholderBool=false;
+
 	
 	
 	if (SDL_Init(SDL_INIT_VIDEO) != true) TerminalError("SDL_INIT Error.->" + string(SDL_GetError()),consoleWindow);
@@ -147,7 +186,7 @@ int main()
 		{ 
 			SDL_RenderClear(renderer);
 		SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
-		placeholderInt = random(0, 36);
+		placeholderInt = random(0, 37);
 		TTF_Font* font = TTF_OpenFont("arial.ttf", 50); if (!font) {TerminalError("TTF_OpenFont Error.->" + string(SDL_GetError()), consoleWindow);}
 		SDL_Surface* countryTextSurface = TTF_RenderText_Solid(font, countries[placeholderInt].name.c_str(), countries[placeholderInt].name.length(), black); if (!countryTextSurface)TerminalError("TTF_RenderText_Solid Error.->" + string(SDL_GetError()), consoleWindow);
 		SDL_Texture* countryTextTexture = SDL_CreateTextureFromSurface(renderer, countryTextSurface); if (!countryTextTexture)TerminalError("SDL_CreateTextureFromSurface Error.->" + string(SDL_GetError()), consoleWindow);
@@ -159,16 +198,20 @@ int main()
 		{
 			while (SDL_PollEvent(&event))
 			{
+				
+
 				if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 				{
 					if (event.button.x > countries[placeholderInt].x + 100 && event.button.x < countries[placeholderInt].x + 100 + 11 && event.button.y > countries[placeholderInt].y + 100 && event.button.y < countries[placeholderInt].y + 100 + 11)
 					{
-						cout << "Correct!\n";
+						cout << "Correct! You clicked at:" << event.button.x << "," << event.button.y << "\n";
 						placeholderBool = true;
+						SendMessageToPeer(peerIP, 12345, "Peer " + ip + " guessed country: " + countries[placeholderInt].name+"\n");
+					    
 					}
 					else
 					{
-						cout << "WRONG! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+						cout << "Wrong! You clicked at:" << event.button.x << "," << event.button.y << "\n";
 
 					}
 
@@ -177,17 +220,20 @@ int main()
 
 
 			}
-
+		
 
 
 		}
+
 		}
 	}
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	TTF_Quit();
-	return 0;
+	
+	
 
+	return 0;
 }
 
 

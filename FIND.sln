@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Relase2|x64 = Relase2|x64
+		Relase2|x86 = Relase2|x86
 		Release(including LIBS)|x64 = Release(including LIBS)|x64
 		Release(including LIBS)|x86 = Release(including LIBS)|x86
 		Release|x64 = Release|x64
@@ -19,6 +21,10 @@ Global
 		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Debug|x64.Build.0 = Debug|x64
 		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Debug|x86.ActiveCfg = Debug|Win32
 		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Debug|x86.Build.0 = Debug|Win32
+		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Relase2|x64.ActiveCfg = Debug|x64
+		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Relase2|x64.Build.0 = Debug|x64
+		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Relase2|x86.ActiveCfg = Debug|Win32
+		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Relase2|x86.Build.0 = Debug|Win32
 		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Release(including LIBS)|x64.ActiveCfg = Release(including LIBS)|x64
 		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Release(including LIBS)|x64.Build.0 = Release(including LIBS)|x64
 		{FDDF051A-634A-48CF-96FF-4FE62ED824D0}.Release(including LIBS)|x86.ActiveCfg = Release(including LIBS)|Win32
