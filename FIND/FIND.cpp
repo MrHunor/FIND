@@ -61,37 +61,7 @@ int main()
 
 	
 	
-	cout << "Welcome!\n";
-	if (!CheckYggdrasilInstallStatus()) {
-		cout << "FIND needs Yggdrasil to run (handles Multiplayer), do you want to install (program will close without installing Yggdrasil)? (y/n)" << endl;
-		cin >> placeholderString;
-		if (placeholderString == "y" || placeholderString == "Y") {
-			system("sc start msiserver");
-			if (!DownloadYggdrasil(getExecutableDir()))TerminalError("DownloadYggdrasil Error, exiting...\n",consoleWindow);
-			placeholderString =  "\""+Wstring2String(getExecutableDir()) + "\\yggdrasil-0.5.12-x64.msi\"";
-			system(placeholderString.c_str());
-			addToUserPath(getExecutableDir()); //Add Yggdrasil to the user PATH so it can be used in the future
-		}
-		else return 0;
-	}
-	else cout << "Yggdrasil is already installed! Skipping installation...\n";
-	StartYggdrasil();
-	cout << "If its says \"An instance of the service is already running.\" its working!\n";
 
-
-	//multiplayer setup
-	WSADATA wsaData;
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-
-	std::string ip = GetYggdrasilIP();
-	std::cout << "Yggdrasil IP: " << ip << std::endl;
-	WSACleanup();
-	system("netsh advfirewall firewall add rule name=\"FIND_Game\" dir=in action=allow protocol=TCP localport=12345");//set firewall rule to allow traffic through port 12345
-	cout << "Please enter your Peers(Mutiplayers)IP:";
-	cin >> peerIP;
-	if (!isPortFree(12345))TerminalError("Port 12345(default port) is not free. Exiting....", consoleWindow);
-	thread listernerThread(StartListening, 12345); //Start the listener thread
-	listernerThread.detach(); //Detach the thread so it runs in the background
 
 
 	countryData countries[38] = { //These Coordinates are within the Picture, keep in mind to change them accoring to where the picture is renderd
@@ -206,7 +176,7 @@ int main()
 					{
 						cout << "Correct! You clicked at:" << event.button.x << "," << event.button.y << "\n";
 						placeholderBool = true;
-						SendMessageToPeer(peerIP, 12345, "Peer " + ip + " guessed country: " + countries[placeholderInt].name + "\n");
+					
 					    
 					}
 					else
