@@ -58,12 +58,6 @@ int main()
 	}
 
 
-
-	
-	
-
-
-
 	countryData countries[38] = { //These Coordinates are within the Picture, keep in mind to change them accoring to where the picture is renderd
 		{"Ireland",122,388},
 		{"United Kingdom",242,409},
@@ -99,7 +93,7 @@ int main()
 		{"Estonia",696,265},
 		{"Ukraine",794,463},
 		{"Belarus",726,381},
-		{"Russia",873,387},
+		{"Russia",873,300},
 		{"Russia",794,463},
 		{"Turkey",801,698},
 		{"Moldova",769,521}

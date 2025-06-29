@@ -50,12 +50,6 @@ bool RelaunchAsAdmin()
 
 
 
-
-
-
-
-
-
 std::wstring getExecutablePath() {
     wchar_t buffer[MAX_PATH];
     DWORD length = GetModuleFileNameW(NULL, buffer, MAX_PATH);
