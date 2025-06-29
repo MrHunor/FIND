@@ -37,3 +37,5 @@ extern std::wstring getExecutablePath();
 extern std::string Wstring2String(const std::wstring& wstr);
 extern std::wstring getExecutableDir();
 extern bool RelaunchAsAdmin();
+extern bool writeToFile(const std::string& filename, const std::string& content);
+extern bool fileExists(const std::string& filename);

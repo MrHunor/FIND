@@ -48,8 +48,20 @@ bool RelaunchAsAdmin()
 }
 
 
+bool writeToFile(const std::string& filename, const std::string& content) {
+    std::ofstream outFile(filename, std::ios::trunc); // std::ios::trunc ensures overwrite
+    if (!outFile) {
+        return 0;
+    }
+    outFile << content;
+    outFile.close();
+    return 1;
+}
 
-
+bool fileExists(const std::string& filename) {
+    std::ifstream file(filename);
+    return file.good();
+}
 std::wstring getExecutablePath() {
     wchar_t buffer[MAX_PATH];
     DWORD length = GetModuleFileNameW(NULL, buffer, MAX_PATH);

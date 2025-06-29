@@ -1,6 +1,6 @@
 // FIND.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-                                             
+
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -31,7 +31,7 @@
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 
-struct countryData{ //Each red rectangle is 11x11 pixels
+struct countryData { //Each red rectangle is 11x11 pixels
 	string name;
 	int x;
 	int y;
@@ -49,7 +49,8 @@ int main()
 	SDL_Color black = { 0, 0, 0, 0 };
 	SDL_Event event;
 	bool placeholderBool = false;
-	string peerIP;
+	int score=0;
+	int highScore;
 	if (!IsUserAnAdmin())
 	{
 		if (!RelaunchAsAdmin())TerminalError("RelaunchAsAdmin Error Exiting.....\n", GetConsoleWindow());
@@ -99,14 +100,21 @@ int main()
 		{"Moldova",769,521}
 	};
 
-	
+	cout << "Welcome!\n";
+	if (fileExists("Highscore.txt"))
+	{
+		cout << "Current Highscore:" << read_file_to_string("Highscore.txt") << endl;
+		highScore = stoi(read_file_to_string("Highscore.txt"));
+	}
 
+	else
+	{
+		cout << "No Highscore found, creating one new\n";
+		writeToFile("Highscore.txt", "0");
+		highScore = 0;
+	}
 
-	
-
-	
-	
-	if (SDL_Init(SDL_INIT_VIDEO) != true) TerminalError("SDL_INIT Error.->" + string(SDL_GetError()),consoleWindow);
+	if (SDL_Init(SDL_INIT_VIDEO) != true) TerminalError("SDL_INIT Error.->" + string(SDL_GetError()), consoleWindow);
 	if (TTF_Init() != true) TerminalError("TTF_INIT Error.->" + string(SDL_GetError()), consoleWindow);
 
 	SDL_Window* window = SDL_CreateWindow("SDL3 Window", 1000, 1000, NULL);
@@ -114,7 +122,7 @@ int main()
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
 	if (!renderer) TerminalError("SDL_CreateRenderer Error.->" + string(SDL_GetError()), consoleWindow);
 
-	SDL_Texture* chooseTexture = IMG_LoadTexture(renderer, "Choose_Mode.png"); 
+	SDL_Texture* chooseTexture = IMG_LoadTexture(renderer, "Choose_Mode.png");
 	if (!chooseTexture) TerminalError("IMG_LoadTexture Error. ->" + string(SDL_GetError()), consoleWindow);
 	SDL_RenderTexture(renderer, chooseTexture, 0, 0);
 	SDL_RenderPresent(renderer);
@@ -131,7 +139,7 @@ int main()
 
 
 				}
-				
+
 
 			}
 
@@ -140,64 +148,78 @@ int main()
 	}
 	if (Mode == 0)//country mode
 	{
-		
+
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
 		SDL_RenderClear(renderer);
 		SDL_Texture* europeMap = IMG_LoadTexture(renderer, "europe_map.png");
-		if(!europeMap)TerminalError("IMG_LoadTexture Error. ->" + string(SDL_GetError()), consoleWindow);
+		if (!europeMap)TerminalError("IMG_LoadTexture Error. ->" + string(SDL_GetError()), consoleWindow);
 		SDL_FRect Map_rect{ 100.0f,100.0f, 900.0f,900.0f };
-		while(true)
-		{ 
-			SDL_RenderClear(renderer);
-		SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
-		placeholderInt = random(0, 37);
-		TTF_Font* font = TTF_OpenFont("arial.ttf", 50); if (!font) {TerminalError("TTF_OpenFont Error.->" + string(SDL_GetError()), consoleWindow);}
-		SDL_Surface* countryTextSurface = TTF_RenderText_Solid(font, countries[placeholderInt].name.c_str(), countries[placeholderInt].name.length(), black); if (!countryTextSurface)TerminalError("TTF_RenderText_Solid Error.->" + string(SDL_GetError()), consoleWindow);
-		SDL_Texture* countryTextTexture = SDL_CreateTextureFromSurface(renderer, countryTextSurface); if (!countryTextTexture)TerminalError("SDL_CreateTextureFromSurface Error.->" + string(SDL_GetError()), consoleWindow);
-		SDL_FRect countryTextRect{ 5,5,countryTextSurface->w,countryTextSurface->h };
-		SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
-		SDL_RenderPresent(renderer);
-		placeholderBool = false;
-		while (!placeholderBool)
+		while (true)
 		{
-			while (SDL_PollEvent(&event))
+			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+			SDL_RenderClear(renderer);
+			SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
+			placeholderInt = random(0, 37);
+			TTF_Font* font = TTF_OpenFont("arial.ttf", 50); if (!font) { TerminalError("TTF_OpenFont Error.->" + string(SDL_GetError()), consoleWindow); }
+			SDL_Surface* countryTextSurface = TTF_RenderText_Solid(font, countries[placeholderInt].name.c_str(), countries[placeholderInt].name.length(), black); if (!countryTextSurface)TerminalError("TTF_RenderText_Solid Error.->" + string(SDL_GetError()), consoleWindow);
+			SDL_Texture* countryTextTexture = SDL_CreateTextureFromSurface(renderer, countryTextSurface); if (!countryTextTexture)TerminalError("SDL_CreateTextureFromSurface Error.->" + string(SDL_GetError()), consoleWindow);
+			SDL_FRect countryTextRect{ 5,5,countryTextSurface->w,countryTextSurface->h };
+			SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+			SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+			for (int i = 0; i < 38; ++i) {
+				SDL_FRect rect = {
+					static_cast<float>(countries[i].x + 100),
+					static_cast<float>(countries[i].y + 100),
+					11.0f,
+					11.0f
+				};
+				SDL_RenderFillRect(renderer, &rect);
+			}
+			SDL_RenderPresent(renderer);
+			placeholderBool = false;
+			while (!placeholderBool)
 			{
-				
-
-				if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+				while (SDL_PollEvent(&event))
 				{
-					if (event.button.x > countries[placeholderInt].x + 100 && event.button.x < countries[placeholderInt].x + 100 + 11 && event.button.y > countries[placeholderInt].y + 100 && event.button.y < countries[placeholderInt].y + 100 + 11)
+
+
+					if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 					{
-						cout << "Correct! You clicked at:" << event.button.x << "," << event.button.y << "\n";
-						placeholderBool = true;
-					
-					    
-					}
-					else
-					{
-						cout << "Wrong! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+						if (event.button.x > countries[placeholderInt].x + 100 && event.button.x < countries[placeholderInt].x + 100 + 11 && event.button.y > countries[placeholderInt].y + 100 && event.button.y < countries[placeholderInt].y + 100 + 11)
+						{
+							cout << "Correct! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+							placeholderBool = true;
+							score++;
+							if (score > highScore)
+							{
+								highScore = score;
+								writeToFile("Highscore.txt", to_string(highScore));
+								cout << "New Highscore: " << highScore << "\n";
+							}
+						}
+						else
+						{
+							cout << "Wrong! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+
+						}
 
 					}
+
+
 
 				}
 
 
 
 			}
-		
-
-
-		}
 
 		}
 	}
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	TTF_Quit();
-	
-	
+
+
 
 	return 0;
 }
-
-
