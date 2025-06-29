@@ -44,5 +44,5 @@ extern bool RelaunchAsAdmin();
 extern void StartYggdrasil();
 extern string GetYggdrasilIP();
 extern bool isPortFree(int port);
-extern void SendMessageToPeer(const std::string& ipv6, unsigned short port, const std::string& message);
+extern int SendMessageToPeer(const std::string& ipv6, unsigned short port, const std::string& message);
 extern void StartListening(unsigned short port);

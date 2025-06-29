@@ -206,7 +206,7 @@ int main()
 					{
 						cout << "Correct! You clicked at:" << event.button.x << "," << event.button.y << "\n";
 						placeholderBool = true;
-						SendMessageToPeer(peerIP, 12345, "Peer " + ip + " guessed country: " + countries[placeholderInt].name+"\n");
+						SendMessageToPeer(peerIP, 12345, "Peer " + ip + " guessed country: " + countries[placeholderInt].name + "\n");
 					    
 					}
 					else

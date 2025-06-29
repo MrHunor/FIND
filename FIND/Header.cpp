@@ -204,33 +204,54 @@ string GetYggdrasilIP() {
     return "GetYggdrasilIP Error";
 }
 
-void SendMessageToPeer(const std::string& ipv6, unsigned short port, const std::string& message) {
+int SendMessageToPeer(const std::string& ipv6, unsigned short port, const std::string& message) {
     WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0) {
+        std::cerr << "[WSAStartup] Failed with error: " << result << "\n";
+        return 1;
+    }
 
     SOCKET sock = socket(AF_INET6, SOCK_STREAM, 0);
     if (sock == INVALID_SOCKET) {
-        std::cerr << "Socket creation failed\n";
-        return;
+        std::cerr << "[socket] Creation failed with error: " << WSAGetLastError() << "\n";
+        WSACleanup();
+        return 2;
     }
 
     sockaddr_in6 addr = {};
     addr.sin6_family = AF_INET6;
     addr.sin6_port = htons(port);
-    inet_pton(AF_INET6, ipv6.c_str(), &addr.sin6_addr);
-
-    if (connect(sock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-        std::cerr << "Failed to connect to " << ipv6 << ":" << port << "\n";
+    result = inet_pton(AF_INET6, ipv6.c_str(), &addr.sin6_addr);
+    if (result != 1) {
+        std::cerr << "[inet_pton] Invalid IPv6 address format: " << ipv6 << "\n";
         closesocket(sock);
         WSACleanup();
-        return;
+        return 3;
     }
 
-    send(sock, message.c_str(), message.length(), 0);
-    std::cout << "Message sent: " << message << "\n";
+    result = connect(sock, (sockaddr*)&addr, sizeof(addr));
+    if (result == SOCKET_ERROR) {
+        std::cerr << "[connect] Failed to connect to " << ipv6 << ":" << port
+            << " with error: " << WSAGetLastError() << "\n";
+        closesocket(sock);
+        WSACleanup();
+        return 4;
+    }
+
+    result = send(sock, message.c_str(), static_cast<int>(message.length()), 0);
+    if (result == SOCKET_ERROR) {
+        std::cerr << "[send] Failed to send message with error: " << WSAGetLastError() << "\n";
+        closesocket(sock);
+        WSACleanup();
+        return 5;
+    }
+
+    std::cout << "[SendMessageToPeer] Message sent to " << ipv6 << ":" << port << "\n";
 
     closesocket(sock);
     WSACleanup();
+    return 0;  // Success
 }
 void StartListening(unsigned short port) {
     WSADATA wsaData;
