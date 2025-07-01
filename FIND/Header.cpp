@@ -47,9 +47,19 @@ bool RelaunchAsAdmin()
     return true;
 }
 
+std::string pad16(const std::string& input) {
+    size_t padLen = 16 - (input.size() % 16);
+    return input + std::string(padLen, padLen); // PKCS7 padding
+}
+
+// Utility to remove PKCS7 padding
+std::string unpad(const std::string& padded) {
+    char padChar = padded.back();
+    return padded.substr(0, padded.size() - static_cast<size_t>(padChar));
+}
 
 bool writeToFile(const std::string& filename, const std::string& content) {
-    std::ofstream outFile(filename, std::ios::trunc); // std::ios::trunc ensures overwrite
+    std::ofstream outFile(filename, std::ios::trunc,ios::binary); // std::ios::trunc ensures overwrite
     if (!outFile) {
         return 0;
     }
@@ -120,25 +130,13 @@ bool yes_or_no_random()
 
 string read_file_to_string(string file_path)
 {
-    string filestring;
-
-    ifstream filehandler(file_path);
-
-    if (!filehandler.is_open())
-    {
-        cout << "Error opening file" << endl;
-        return NULL;
+    std::ifstream file(file_path, std::ios::binary);  // important: binary mode!
+    if (!file) {
+        throw std::runtime_error("Could not open file " + file_path);
     }
-    filehandler >> filestring;
-    filehandler.close();
-    if (filehandler.is_open())
-    {
-        cout << "Error closing file" << endl;
-        return 0;
-    }
-
-
-    return filestring;
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    return ss.str();
 
 }
 

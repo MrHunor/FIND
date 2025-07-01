@@ -49,14 +49,9 @@ int main()
 	SDL_Color black = { 0, 0, 0, 0 };
 	SDL_Event event;
 	bool placeholderBool = false;
-	int score=0;
+	int score = 0;
 	int highScore;
-	if (!IsUserAnAdmin())
-	{
-		if (!RelaunchAsAdmin())TerminalError("RelaunchAsAdmin Error Exiting.....\n", GetConsoleWindow());
-		cout << "This Program requires Admin Permissions, relaunching.....\n";
-		return 0;
-	}
+
 
 
 	countryData countries[38] = { //These Coordinates are within the Picture, keep in mind to change them accoring to where the picture is renderd
@@ -200,6 +195,43 @@ int main()
 						else
 						{
 							cout << "Wrong! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red
+							SDL_RenderClear(renderer);
+							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
+							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+
+							for (int i = 0; i < 38; ++i) {
+								SDL_FRect rect = {
+									static_cast<float>(countries[i].x + 100),
+									static_cast<float>(countries[i].y + 100),
+									11.0f,
+									11.0f
+								};
+								SDL_RenderFillRect(renderer, &rect);
+							}
+
+							SDL_RenderPresent(renderer); //  Only once here
+							SDL_Delay(200); // Wait 50ms
+
+							// Redraw normal map
+							SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0); 
+							SDL_RenderClear(renderer);
+							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
+							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+							for (int i = 0; i < 38; ++i) {
+								SDL_FRect rect = {
+									static_cast<float>(countries[i].x + 100), 
+									static_cast<float>(countries[i].y + 100),
+									11.0f,
+									11.0f
+								};
+								SDL_RenderFillRect(renderer, &rect);
+							}
+
+							SDL_RenderPresent(renderer);
+
+							
 
 						}
 

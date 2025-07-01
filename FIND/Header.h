@@ -39,3 +39,5 @@ extern std::wstring getExecutableDir();
 extern bool RelaunchAsAdmin();
 extern bool writeToFile(const std::string& filename, const std::string& content);
 extern bool fileExists(const std::string& filename);
+extern std::string pad16(const std::string& input);
+extern std::string unpad(const std::string& padded);
