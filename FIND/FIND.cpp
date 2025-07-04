@@ -182,7 +182,7 @@ int main()
 					{
 						if (event.button.x > countries[placeholderInt].x + 100 && event.button.x < countries[placeholderInt].x + 100 + 11 && event.button.y > countries[placeholderInt].y + 100 && event.button.y < countries[placeholderInt].y + 100 + 11)
 						{
-							cout << "Correct! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+							cout << "Correct!";
 							placeholderBool = true;
 							score++;
 							if (score > highScore)
@@ -191,10 +191,45 @@ int main()
 								writeToFile("Highscore.txt", to_string(highScore));
 								cout << "New Highscore: " << highScore << "\n";
 							}
+							SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Red
+							SDL_RenderClear(renderer);
+							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
+							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+
+							for (int i = 0; i < 38; ++i) {
+								SDL_FRect rect = {
+									static_cast<float>(countries[i].x + 100),
+									static_cast<float>(countries[i].y + 100),
+									11.0f,
+									11.0f
+								};
+								SDL_RenderFillRect(renderer, &rect);
+							}
+
+							SDL_RenderPresent(renderer); //  Only once here
+							SDL_Delay(200); // Wait 50ms
+
+							// Redraw normal map
+							SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+							SDL_RenderClear(renderer);
+							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
+							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+							for (int i = 0; i < 38; ++i) {
+								SDL_FRect rect = {
+									static_cast<float>(countries[i].x + 100),
+									static_cast<float>(countries[i].y + 100),
+									11.0f,
+									11.0f
+								};
+								SDL_RenderFillRect(renderer, &rect);
+							}
+
+							SDL_RenderPresent(renderer);
 						}
 						else
 						{
-							cout << "Wrong! You clicked at:" << event.button.x << "," << event.button.y << "\n";
+							cout << "Wrong!";
 							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red
 							SDL_RenderClear(renderer);
 							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
