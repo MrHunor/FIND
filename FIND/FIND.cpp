@@ -149,6 +149,7 @@ int main()
 		SDL_Texture* europeMap = IMG_LoadTexture(renderer, "europe_map.png");
 		if (!europeMap)TerminalError("IMG_LoadTexture Error. ->" + string(SDL_GetError()), consoleWindow);
 		SDL_FRect Map_rect{ 100.0f,100.0f, 900.0f,900.0f };
+		
 		while (true)
 		{
 			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
@@ -157,9 +158,14 @@ int main()
 			placeholderInt = random(0, 37);
 			TTF_Font* font = TTF_OpenFont("arial.ttf", 50); if (!font) { TerminalError("TTF_OpenFont Error.->" + string(SDL_GetError()), consoleWindow); }
 			SDL_Surface* countryTextSurface = TTF_RenderText_Solid(font, countries[placeholderInt].name.c_str(), countries[placeholderInt].name.length(), black); if (!countryTextSurface)TerminalError("TTF_RenderText_Solid Error.->" + string(SDL_GetError()), consoleWindow);
+			placeholderString = "P:" + to_string(score) + " H:" + to_string(highScore);
+			SDL_Surface* pointSurface = TTF_RenderText_Solid(font, placeholderString.c_str(), placeholderString.length(), black); if (!pointSurface)TerminalError("TTF_RenderText_Solid Error.->" + string(SDL_GetError()), consoleWindow);
 			SDL_Texture* countryTextTexture = SDL_CreateTextureFromSurface(renderer, countryTextSurface); if (!countryTextTexture)TerminalError("SDL_CreateTextureFromSurface Error.->" + string(SDL_GetError()), consoleWindow);
+			SDL_Texture* pointTexture = SDL_CreateTextureFromSurface(renderer, pointSurface); if (!pointTexture)TerminalError("SDL_CreateTextureFromSurface Error.->" + string(SDL_GetError()), consoleWindow);
 			SDL_FRect countryTextRect{ 5,5,countryTextSurface->w,countryTextSurface->h };
+			SDL_FRect pointRect{ 400,5,pointTexture->w,pointTexture->h };
 			SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+			SDL_RenderTexture(renderer, pointTexture, 0, &pointRect);
 			SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 			for (int i = 0; i < 38; ++i) {
 				SDL_FRect rect = {
@@ -182,7 +188,7 @@ int main()
 					{
 						if (event.button.x > countries[placeholderInt].x + 100 && event.button.x < countries[placeholderInt].x + 100 + 11 && event.button.y > countries[placeholderInt].y + 100 && event.button.y < countries[placeholderInt].y + 100 + 11)
 						{
-							cout << "Correct!";
+							cout << "Correct!\n";
 							placeholderBool = true;
 							score++;
 							if (score > highScore)
@@ -195,7 +201,8 @@ int main()
 							SDL_RenderClear(renderer);
 							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
 							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
-
+							SDL_RenderTexture(renderer, pointTexture, 0, &pointRect);
+							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 							for (int i = 0; i < 38; ++i) {
 								SDL_FRect rect = {
 									static_cast<float>(countries[i].x + 100),
@@ -212,6 +219,10 @@ int main()
 							// Redraw normal map
 							SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
 							SDL_RenderClear(renderer);
+							placeholderString = "P:" + to_string(score) + " H:" + to_string(highScore);
+							SDL_Surface* pointSurface = TTF_RenderText_Solid(font, placeholderString.c_str(), placeholderString.length(), black);
+							SDL_Texture* pointTexture = SDL_CreateTextureFromSurface(renderer, pointSurface);
+							SDL_RenderTexture(renderer, pointTexture, 0, &pointRect);
 							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
 							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
 							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -229,11 +240,13 @@ int main()
 						}
 						else
 						{
-							cout << "Wrong!";
+							cout << "Wrong!\n";
 							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red
 							SDL_RenderClear(renderer);
+							SDL_RenderTexture(renderer, pointTexture, 0, &pointRect);
 							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
 							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
+							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 
 							for (int i = 0; i < 38; ++i) {
 								SDL_FRect rect = {
@@ -251,6 +264,10 @@ int main()
 							// Redraw normal map
 							SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0); 
 							SDL_RenderClear(renderer);
+							placeholderString = "P:" + to_string(score) + " H:" + to_string(highScore);
+							SDL_Surface* pointSurface = TTF_RenderText_Solid(font, placeholderString.c_str(), placeholderString.length(), black);
+							SDL_Texture* pointTexture = SDL_CreateTextureFromSurface(renderer, pointSurface);
+							SDL_RenderTexture(renderer, pointTexture, 0, &pointRect);
 							SDL_RenderTexture(renderer, europeMap, 0, &Map_rect);
 							SDL_RenderTexture(renderer, countryTextTexture, 0, &countryTextRect);
 							SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
